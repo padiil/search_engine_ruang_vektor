@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pencarian Paper</title>
+    <script>
+        async function searchPapers() {
+            const query = document.getElementById("query").value;
+            const resultsDiv = document.getElementById("results");
+            resultsDiv.innerHTML = '<p>Loading...</p>'; // Menampilkan indikator loading
+
+            const response = await fetch(`/search?query=${encodeURIComponent(query)}`);
+            const results = await response.json();
+
+            resultsDiv.innerHTML = ''; // Menghapus indikator loading
+
+            if (results.error) {
+                resultsDiv.innerHTML = results.error;
+                return;
+            }
+
+            results.forEach(paper => {
+                const paperElement = document.createElement("div");
+                paperElement.innerHTML = `<strong>Judul:</strong> ${paper.title} <br> <strong>Skor:</strong> ${paper.score.toFixed(2)} <br> <strong>ID:</strong> ${paper.id}`;
+                resultsDiv.appendChild(paperElement);
+                console.log(paper)
+            });
+        }
+    </script>
+</head>
+<body>
+    <h1>Pencarian Paper Riset</h1>
+    <input type="text" id="query" placeholder="Masukkan kata kunci pencarian">
+    <button onclick="searchPapers()">Cari</button>
+    <div id="results"></div>
+</body>
+</html>
