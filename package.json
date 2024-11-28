@@ -1,6 +1,17 @@
 {
+  "name": "tugas-akhir",
+  "version": "1.0.0",
+  "description": "Proyek ini merupakan implementasi dari metode vektor ruang untuk sistem pencarian jurnal menggunakan teknik aljabar linear, khususnya terkait dengan konsep-konsep seperti **TF-IDF** (Term Frequency-Inverse Document Frequency) dan **cosine similarity**. Proyek ini dikembangkan oleh tiga orang anggota yang memiliki fokus pada penerapan vektor ruang dalam konteks pencarian berbasis teks.",
+  "main": "tailwind.config.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "css": "npx tailwindcss -i ./app/static/input.css -o ./app/static/output.css --watch",
+    "dev": "python main.py"
+  },
+  "author": "",
+  "license": "ISC",
   "devDependencies": {
-    "tailwindcss": "^3.4.14"
+    "tailwindcss": "^3.4.15"
   },
   "dependencies": {
     "@heroicons/react": "^2.1.5"
