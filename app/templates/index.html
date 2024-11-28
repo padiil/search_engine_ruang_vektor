@@ -12,7 +12,7 @@
       const sortOption = document.getElementById("sortOption").value;
       const resultsDiv = document.getElementById("results");
       const countDiv = document.getElementById("count");
-
+      const yearFilter = document.querySelector('input[name="yearFilter"]:checked').value;
 
       // jadi mun te ngetik query moal aya nanaon siga google
       if (!query) {
@@ -23,7 +23,7 @@
       }
 
       const response = await fetch(
-        `/search?query=${encodeURIComponent(query)}&sort=${sortOption}`
+        `/search?query=${encodeURIComponent(query)}&sort=${sortOption}&yearFilter=${yearFilter}`
       );
       const results = await response.json();
 
@@ -70,7 +70,7 @@
       });
 
 
-      console.log(results[0]);
+      console.log(results);
     }
 
     function updatePlaceholder() {
@@ -114,8 +114,30 @@
       <option value="relevance">Relevansi</option>
       <option value="year">Tahun Terbaru</option>
       <option value="citations">Sitasi Terbanyak</option>
-      <option value="title">Judul (Alphabet)</option>
     </select>
+
+    <div class="mt-4" id="yearFilter">
+      <label>
+        <input type="radio" name="yearFilter" value="all" checked>
+        Semua Tahun
+      </label>
+      <label class="ml-4">
+        <input type="radio" name="yearFilter" value="3">
+        3 Tahun Kebelakang
+      </label>
+      <label class="ml-4">
+        <input type="radio" name="yearFilter" value="5">
+        5 Tahun Kebelakang
+      </label>
+      <label class="ml-4">
+        <input type="radio" name="yearFilter" value="10">
+        10 Tahun Kebelakang
+      </label>
+      <label class="ml-4">
+        <input type="radio" name="yearFilter" value="20">
+        20 Tahun Kebelakang
+      </label>
+    </div>
   </div>
   <div id="count" class="mt-4 text-lg text-center text-gray-600"></div>
   <div id="results" class="mt-8 space-y-4"></div>

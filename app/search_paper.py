@@ -1,25 +1,16 @@
-from pymongo import MongoClient
+from datetime import datetime
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
-from flask import Flask, render_template, request, jsonify
-from datetime import datetime
 
-# definisi variabel
 current_year = datetime.now().year
 limitSearch = 100000
 limitView = 100000
 
-# Setup Flask app
-app = Flask(__name__)
-
-# Koneksi ke MongoDB
-client = MongoClient("mongodb://localhost:27017/")
-db = client["research_paper_dataset"]
-collection = db["research_paper"]
-
 
 # Fungsi untuk mencari dokumen berdasarkan query
-def search_papers(query, sort="relevance", yearFilter="all", limit=limitView):
+def search_papers(
+    collection, query, sort="relevance", yearFilter="all", limit=limitView
+):
     documents = list(
         collection.find(
             {},
@@ -55,9 +46,9 @@ def search_papers(query, sort="relevance", yearFilter="all", limit=limitView):
         authors = doc.get("authors", [])
         if isinstance(authors, str):
             try:
-                authors = eval(authors)  # Mengubah string menjadi list
+                authors = eval(authors)
             except Exception:
-                authors = [authors]  # Jika gagal, tetap jadikan list dengan satu elemen
+                authors = [authors]
 
         data.append(
             {
@@ -73,11 +64,9 @@ def search_papers(query, sort="relevance", yearFilter="all", limit=limitView):
         )
 
     if yearFilter != "all":
-        year_range = int(yearFilter)  # Mengubah nilai filter menjadi integer
-        start_year = current_year - year_range  # Tahun awal yang diperbolehkan
-        data = [
-            x for x in data if int(x["year"]) >= start_year
-        ]  # Filter hanya data di tahun >= start_year
+        year_range = int(yearFilter)
+        start_year = current_year - year_range
+        data = [x for x in data if int(x["year"]) >= start_year]
 
     if sort == "relevance":
         data = sorted(data, key=lambda x: x["score"], reverse=True)
@@ -89,28 +78,3 @@ def search_papers(query, sort="relevance", yearFilter="all", limit=limitView):
         data = sorted(data, key=lambda x: x["title"].lower())
 
     return data
-
-
-# Endpoint untuk halaman beranda
-@app.route("/")
-def home():
-    return render_template("index.html")
-
-
-# Endpoint untuk pencarian
-@app.route("/search", methods=["GET"])
-def search():
-    query = request.args.get("query", "")
-    sort = request.args.get("sort", "relevance")
-    yearFilter = request.args.get("yearFilter", "")
-
-    if not query:
-        return jsonify({"error": "Query parameter is required"}), 400
-
-    results = search_papers(query, sort=sort, yearFilter=yearFilter)
-    return jsonify(results)
-
-
-# Jalankan aplikasi
-if __name__ == "__main__":
-    app.run(debug=True)

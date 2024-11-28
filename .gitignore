@@ -1,2 +1,57 @@
-node_modules
-venv
+# Python
+*.pyc
+*.pyo
+*.pyd
+__pycache__/
+*.so
+
+# Virtual environment
+venv/
+env/
+
+# Flask instance folder
+instance/
+
+# Flask bytecode files
+*.pyc
+
+# VS Code settings
+.vscode/
+
+# macOS Finder
+.DS_Store
+
+# Windows Installer files
+Thumbs.db
+
+# IDE/Editor folder
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Database files
+*.sqlite3
+*.db
+*.mongodb
+
+# Python egg
+*.egg
+*.egg-info
+
+# Jupyter Notebooks
+.ipynb_checkpoints/
+
+# Log files
+*.log
+
+# Tailwind CSS output
+/static/output.css
+
+# Node modules (if any, for TailwindCSS or other JS dependencies)
+node_modules/
+
+# Cache files
+*.cache
+
+# Configuration files
+*.env
