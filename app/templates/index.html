@@ -1,147 +1,251 @@
 <!DOCTYPE html>
 <html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      href="{{ url_for('static', filename='output.css') }}"
+      rel="stylesheet"
+    />
+    <title>Pencarian Paper</title>
+    <script>
+      let resultsData = []; // Menyimpan hasil pencarian
+      let currentPage = 1; // Halaman yang sedang ditampilkan
+      const itemsPerPage = 10; // Jumlah item per halaman
 
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link href="{{ url_for('static', filename='output.css') }}" rel="stylesheet">
-  <title>Pencarian Paper</title>
-  <script>
-    async function searchPapers() {
-      const query = document.getElementById("query").value;
-      const sortOption = document.getElementById("sortOption").value;
-      const resultsDiv = document.getElementById("results");
-      const countDiv = document.getElementById("count");
-      const yearFilter = document.querySelector('input[name="yearFilter"]:checked').value;
+      async function searchPapers() {
+        currentPage = 1; // Reset ke halaman pertama setiap pencarian baru
+        const query = document.getElementById("query").value;
+        const sortOption = document.getElementById("sortOption").value;
+        const resultsDiv = document.getElementById("results");
+        const countDiv = document.getElementById("count");
+        const yearFilter = document.querySelector(
+          'input[name="yearFilter"]:checked'
+        ).value;
 
-      // jadi mun te ngetik query moal aya nanaon siga google
-      if (!query) {
-        return;
-      } else {
-        resultsDiv.innerHTML = "<p>Loading...</p>";
-        countDiv.innerHTML = "";
-      }
+        if (!query) {
+          return;
+        } else {
+          resultsDiv.innerHTML = "<p>Loading...</p>";
+          countDiv.innerHTML = "";
+        }
 
-      const response = await fetch(
-        `/search?query=${encodeURIComponent(query)}&sort=${sortOption}&yearFilter=${yearFilter}`
-      );
-      const results = await response.json();
-
-      resultsDiv.innerHTML = "";
-
-      if (results.error) {
-        resultsDiv.innerHTML = `<p class="text-red-500">${results.error}</p>`;
-        return;
-      }
-
-      if (results.length === 0) {
-        resultsDiv.innerHTML =
-          "<p class='text-gray-600'>No results found.</p>";
-      } else {
-        countDiv.innerHTML = `<p>${results.length} jurnal tersedia</p>`;
-      }
-
-      results.forEach((paper) => {
-        const paperElement = document.createElement("div");
-        paperElement.classList.add(
-          "p-6",
-          "bg-white",
-          "shadow-lg",
-          "rounded-lg",
-          "mb-4",
-          "border",
-          "border-gray-200",
-          "w-11/12",
-          "mx-auto",
-          "md:w-10/12",
-          "lg:w-9/12"
+        const response = await fetch(
+          `/search?query=${encodeURIComponent(
+            query
+          )}&sort=${sortOption}&yearFilter=${yearFilter}`
         );
+        const results = await response.json();
+        resultsData = results; // Menyimpan data hasil pencarian
+        resultsDiv.innerHTML = "";
 
-        paperElement.innerHTML = `
-    <strong>Title:</strong> ${paper.title} <br>
-    <strong>Score:</strong> ${paper.score.toFixed(2)} <br>
-    <strong>Author:</strong> ${paper.authors && Array.isArray(paper.authors)
-            ? paper.authors.join(", ")
-            : "Unavailable"
-          } <br>
-    <strong>ID:</strong> ${paper.id} <br><br>
-  `;
-        resultsDiv.appendChild(paperElement);
-      });
+        if (results.error) {
+          resultsDiv.innerHTML = `<p class="text-red-500">${results.error}</p>`;
+          return;
+        }
 
+        if (results.length === 0) {
+          resultsDiv.innerHTML =
+            "<p class='text-gray-600'>No results found.</p>";
+        } else {
+          countDiv.innerHTML = `<p>${results.length} jurnal tersedia</p>`;
+        }
 
-      console.log(results);
-    }
-
-    function updatePlaceholder() {
-      const input = document.getElementById("query");
-      if (window.innerWidth >= 510) {
-        input.placeholder = "Enter Search Keywords";
-      } else if (window.innerWidth < 400) {
-        input.placeholder = "Keywords";
-      } else {
-        input.placeholder = "Search Keywords";
+        // Menampilkan hasil halaman pertama
+        showPage(currentPage);
       }
-    }
 
-    window.addEventListener("load", updatePlaceholder);
-    window.addEventListener("resize", updatePlaceholder);
-  </script>
-</head>
+      function showPage(page) {
+        const resultsDiv = document.getElementById("results");
+        const startIndex = (page - 1) * itemsPerPage;
+        const endIndex = page * itemsPerPage;
+        const currentItems = resultsData.slice(startIndex, endIndex);
 
-<body class="bg-gray-100">
-  <div class="w-11/12 p-4 mx-auto md:10/12 lg:9/12 md:p-8">
-    <h1 class="mt-20 mb-2 text-3xl font-bold text-center text-gray-800">
-      Journal Search System
-    </h1>
-    <p class="mb-6 text-lg text-center text-gray-600">
-      Powered by Vector Space Model
-    </p>
+        resultsDiv.innerHTML = "";
+        currentItems.forEach((paper) => {
+          const paperElement = document.createElement("div");
+          paperElement.classList.add(
+            "p-6",
+            "bg-white",
+            "shadow-lg",
+            "rounded-lg",
+            "mb-4",
+            "border",
+            "border-gray-200",
+            "w-11/12",
+            "mx-auto",
+            "md:w-10/12",
+            "lg:w-9/12"
+          );
 
-    <div class="flex justify-center w-full mx-auto">
-      <input type="text" id="query"
-        class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-        placeholder="Enter Search Keywords" />
-      <button onclick="searchPapers()"
-        class="px-4 py-2 ml-8 text-white bg-blue-600 rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
-        Search
-      </button>
+          paperElement.innerHTML = `
+          <strong>Title:</strong> ${paper.title} <br>
+          <strong>Authors:</strong> ${
+            paper.authors && Array.isArray(paper.authors)
+              ? paper.authors.join(", ")
+              : "Unavailable"
+          } <br>
+          <strong>Publisher (Venue):</strong> ${
+            paper.venue || "Unavailable"
+          } <br>
+          <strong>Year:</strong> ${paper.year || "Unavailable"} <br>
+          <strong>Citations:</strong> ${paper.n_citation || "0"} <br><br>
+        `;
+          resultsDiv.appendChild(paperElement);
+        });
+
+        showPagination();
+      }
+
+      function showPagination() {
+        const paginationDiv = document.getElementById("pagination");
+        const totalPages = Math.ceil(resultsData.length / itemsPerPage);
+
+        paginationDiv.innerHTML = `
+        <button onclick="changePage('prev')" ${
+          currentPage === 1 ? "disabled" : ""
+        }>Previous</button>
+        <span>Page ${currentPage} of ${totalPages}</span>
+        <button onclick="changePage('next')" ${
+          currentPage === totalPages ? "disabled" : ""
+        }>Next</button>
+      `;
+      }
+
+      function changePage(direction) {
+        if (
+          direction === "next" &&
+          currentPage < Math.ceil(resultsData.length / itemsPerPage)
+        ) {
+          currentPage++;
+        } else if (direction === "prev" && currentPage > 1) {
+          currentPage--;
+        }
+        showPage(currentPage);
+      }
+
+      function updatePlaceholder() {
+        const input = document.getElementById("query");
+        if (window.innerWidth >= 510) {
+          input.placeholder = "Enter Search Keywords";
+        } else if (window.innerWidth < 400) {
+          input.placeholder = "Keywords";
+        } else {
+          input.placeholder = "Search Keywords";
+        }
+      }
+
+      window.addEventListener("load", updatePlaceholder);
+      window.addEventListener("resize", updatePlaceholder);
+
+      document
+        .getElementById("query")
+        .addEventListener("keypress", function (event) {
+          if (event.key === "Enter") {
+            event.preventDefault();
+            searchPapers();
+          }
+        });
+    </script>
+  </head>
+
+  <body class="w-11/12 bg-white md:w-9/12 mx-auto">
+    <div class="w-11/12 mx-auto md:10/12 lg:9/12 md:p-8">
+      <h1
+        class="mb-2 text-3xl font-bold text-center text-gray-800 mt-14 md:mt-20"
+      >
+        Journal Search System
+      </h1>
+      <p class="mb-6 text-lg text-center text-gray-600">
+        Powered by Vector Space Model
+      </p>
+
+      <div class="flex justify-center w-full mx-auto">
+        <input
+          type="text"
+          id="query"
+          class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="Enter Search Keywords"
+        />
+        <button
+          onclick="searchPapers()"
+          class="px-4 py-2 ml-8 text-white bg-blue-600 rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          Search
+        </button>
+      </div>
     </div>
-  </div>
-  <div>
-    <select id="sortOption"
-      class="p-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-      <option value="relevance">Relevansi</option>
-      <option value="year">Tahun Terbaru</option>
-      <option value="citations">Sitasi Terbanyak</option>
-    </select>
-
-    <div class="mt-4" id="yearFilter">
-      <label>
-        <input type="radio" name="yearFilter" value="all" checked>
-        Semua Tahun
-      </label>
-      <label class="ml-4">
-        <input type="radio" name="yearFilter" value="3">
-        3 Tahun Kebelakang
-      </label>
-      <label class="ml-4">
-        <input type="radio" name="yearFilter" value="5">
-        5 Tahun Kebelakang
-      </label>
-      <label class="ml-4">
-        <input type="radio" name="yearFilter" value="10">
-        10 Tahun Kebelakang
-      </label>
-      <label class="ml-4">
-        <input type="radio" name="yearFilter" value="20">
-        20 Tahun Kebelakang
-      </label>
+    <div>
+      <div class="flex justify-center">
+        <select
+          id="sortOption"
+          class="p-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          <option value="relevance">Relevansi</option>
+          <option value="year">Tahun Terbaru</option>
+          <option value="citations">Sitasi Terbanyak</option>
+        </select>
+      </div>
+      <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div class="flex items-center">
+          <input
+            type="radio"
+            name="yearFilter"
+            value="all"
+            checked
+            class="text-blue-600 form-radio"
+          />
+          <span class="ml-2">Semua Tahun</span>
+        </div>
+        <div class="flex items-center">
+          <input
+            type="radio"
+            name="yearFilter"
+            value="3"
+            class="text-blue-600 form-radio"
+          />
+          <span class="ml-2">3 Tahun Kebelakang</span>
+        </div>
+        <div class="flex items-center">
+          <input
+            type="radio"
+            name="yearFilter"
+            value="5"
+            class="text-blue-600 form-radio"
+          />
+          <span class="ml-2">5 Tahun Kebelakang</span>
+        </div>
+        <div class="flex items-center">
+          <input
+            type="radio"
+            name="yearFilter"
+            value="1"
+            class="text-blue-600 form-radio"
+          />
+          <span class="ml-2">1 Tahun Kebelakang</span>
+        </div>
+        <div class="flex items-center">
+          <input
+            type="radio"
+            name="yearFilter"
+            value="10"
+            class="text-blue-600 form-radio"
+          />
+          <span class="ml-2">10 Tahun Kebelakang</span>
+        </div>
+        <div class="flex items-center">
+          <input
+            type="radio"
+            name="yearFilter"
+            value="20"
+            class="text-blue-600 form-radio"
+          />
+          <span class="ml-2">20 Tahun Kebelakang</span>
+        </div>
+      </div>
     </div>
-  </div>
-  <div id="count" class="mt-4 text-lg text-center text-gray-600"></div>
-  <div id="results" class="mt-8 space-y-4"></div>
-  </div>
-</body>
-
+    <div id="count" class="mt-4 text-lg text-center text-gray-600"></div>
+    <div id="results" class="mt-8 space-y-4"></div>
+    <div id="pagination" class="flex justify-center mt-8 space-x-4"></div>
+  </body>
 </html>
