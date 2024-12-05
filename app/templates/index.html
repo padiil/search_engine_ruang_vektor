@@ -9,34 +9,53 @@
     />
     <title>Pencarian Paper</title>
     <script>
-      let resultsData = []; // Menyimpan hasil pencarian
-      let currentPage = 1; // Halaman yang sedang ditampilkan
-      const itemsPerPage = 10; // Jumlah item per halaman
+      // State management
+      let resultsData = [];
+      let currentPage = 1;
+      const itemsPerPage = 10;
 
+      // Main search function
       async function searchPapers() {
-        currentPage = 1; // Reset ke halaman pertama setiap pencarian baru
-        const query = document.getElementById("query").value;
+        currentPage = 1;
+        const query = document.getElementById("query").value.trim();
         const sortOption = document.getElementById("sortOption").value;
-        const resultsDiv = document.getElementById("results");
-        const countDiv = document.getElementById("count");
         const yearFilter = document.querySelector(
           'input[name="yearFilter"]:checked'
-        ).value;
+        )?.value;
+        const resultsDiv = document.getElementById("results");
+        const countDiv = document.getElementById("count");
 
+        // Input validation
         if (!query) {
+          alert("Masukkan kata kunci pencarian.");
           return;
-        } else {
-          resultsDiv.innerHTML = "<p>Loading...</p>";
-          countDiv.innerHTML = "";
         }
 
-        const response = await fetch(
-          `/search?query=${encodeURIComponent(
-            query
-          )}&sort=${sortOption}&yearFilter=${yearFilter}`
-        );
-        const results = await response.json();
-        resultsData = results; // Menyimpan data hasil pencarian
+        // Show loading indicator
+        resultsDiv.innerHTML = "<p>Loading...</p>";
+        countDiv.innerHTML = "";
+
+        try {
+          const response = await fetch(
+            `/search?query=${encodeURIComponent(
+              query
+            )}&sort=${sortOption}&yearFilter=${yearFilter}`
+          );
+          if (!response.ok)
+            throw new Error(`HTTP error! status: ${response.status}`);
+
+          const results = await response.json();
+          resultsData = results;
+          displayResults(results, resultsDiv, countDiv);
+        } catch (error) {
+          resultsDiv.innerHTML =
+            "<p class='text-red-500'>Terjadi kesalahan saat mengambil data. Silakan coba lagi.</p>";
+          console.error("Error fetching data:", error);
+        }
+      }
+
+      // Display search results
+      function displayResults(results, resultsDiv, countDiv) {
         resultsDiv.innerHTML = "";
 
         if (results.error) {
@@ -46,77 +65,73 @@
 
         if (results.length === 0) {
           resultsDiv.innerHTML =
-            "<p class='text-gray-600'>No results found.</p>";
+        "<p class='text-gray-600'>Tidak ada hasil ditemukan.</p>";
         } else {
-          countDiv.innerHTML = `<p>${results.length} jurnal tersedia</p>`;
+          countDiv.innerHTML = `
+        <div class="flex items-center justify-center space-x-2 mx-auto">
+          ${getIcon()}
+          <p>${results.length} jurnal tersedia</p>
+        </div>`;
+          showPage(currentPage);
         }
-
-        // Menampilkan hasil halaman pertama
-        showPage(currentPage);
       }
 
+      // SVG Icon
+      function getIcon() {
+        return `
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6">
+        <path d="M5.625 1.5c-1.036 0-1.875.84-1.875 1.875v17.25c0 1.035.84 1.875 1.875 1.875h12.75c1.035 0 1.875-.84 1.875-1.875V12.75A3.75 3.75 0 0 0 16.5 9h-1.875a1.875 1.875 0 0 1-1.875-1.875V5.25A3.75 3.75 0 0 0 9 1.5H5.625Z" />
+        <path d="M12.971 1.816A5.23 5.23 0 0 1 14.25 5.25v1.875c0 .207.168.375.375.375H16.5a5.23 5.23 0 0 1 3.434 1.279 9.768 9.768 0 0 0-6.963-6.963Z" />
+      </svg>`;
+      }
+
+      // Show a specific page of results
       function showPage(page) {
         const resultsDiv = document.getElementById("results");
         const startIndex = (page - 1) * itemsPerPage;
         const endIndex = page * itemsPerPage;
         const currentItems = resultsData.slice(startIndex, endIndex);
 
-        resultsDiv.innerHTML = "";
-        currentItems.forEach((paper) => {
-          const paperElement = document.createElement("div");
-          paperElement.classList.add(
-            "p-6",
-            "bg-white",
-            "shadow-lg",
-            "rounded-lg",
-            "mb-4",
-            "border",
-            "border-gray-200",
-            "w-11/12",
-            "mx-auto",
-            "md:w-10/12",
-            "lg:w-9/12"
-          );
-
-          paperElement.innerHTML = `
-          <strong>Title:</strong> ${paper.title} <br>
-          <strong>Authors:</strong> ${
-            paper.authors && Array.isArray(paper.authors)
-              ? paper.authors.join(", ")
-              : "Unavailable"
-          } <br>
-          <strong>Publisher (Venue):</strong> ${
-            paper.venue || "Unavailable"
-          } <br>
-          <strong>Year:</strong> ${paper.year || "Unavailable"} <br>
-          <strong>Citations:</strong> ${paper.n_citation || "0"} <br><br>
-        `;
-          resultsDiv.appendChild(paperElement);
-        });
+        resultsDiv.innerHTML = currentItems
+          .map(
+            (paper) => `
+      <div class="p-6 bg-white shadow-lg rounded-lg mb-4 border border-gray-200 w-11/12 mx-auto md:w-10/12 lg:w-9/12">
+        <strong>Title:</strong> ${paper.title || "Unavailable"}<br>
+        <strong>Authors:</strong> ${
+          paper.authors?.join(", ") || "Unavailable"
+        }<br>
+        <strong>Publisher (Venue):</strong> ${paper.venue || "Unavailable"}<br>
+        <strong>Year:</strong> ${paper.year || "Unavailable"}<br>
+        <strong>Citations:</strong> ${paper.n_citation || "0"}<br>
+      </div>
+    `
+          )
+          .join("");
 
         showPagination();
       }
 
+      // Display pagination buttons
       function showPagination() {
         const paginationDiv = document.getElementById("pagination");
         const totalPages = Math.ceil(resultsData.length / itemsPerPage);
 
         paginationDiv.innerHTML = `
-        <button onclick="changePage('prev')" ${
-          currentPage === 1 ? "disabled" : ""
-        }>Previous</button>
-        <span>Page ${currentPage} of ${totalPages}</span>
-        <button onclick="changePage('next')" ${
-          currentPage === totalPages ? "disabled" : ""
-        }>Next</button>
-      `;
+      <button onclick="changePage('prev')" class="px-4 py-2 bg-gray-200 rounded ${
+        currentPage === 1 ? "opacity-50 cursor-not-allowed" : ""
+      }" ${currentPage === 1 ? "disabled" : ""}>Previous</button>
+      <span>Page ${currentPage} of ${totalPages}</span>
+      <button onclick="changePage('next')" class="px-4 py-2 bg-gray-200 rounded ${
+        currentPage === totalPages ? "opacity-50 cursor-not-allowed" : ""
+      }" ${currentPage === totalPages ? "disabled" : ""}>Next</button>
+    `;
       }
 
+      // Handle page navigation
       function changePage(direction) {
-        if (
-          direction === "next" &&
-          currentPage < Math.ceil(resultsData.length / itemsPerPage)
-        ) {
+        const totalPages = Math.ceil(resultsData.length / itemsPerPage);
+
+        if (direction === "next" && currentPage < totalPages) {
           currentPage++;
         } else if (direction === "prev" && currentPage > 1) {
           currentPage--;
@@ -124,28 +139,26 @@
         showPage(currentPage);
       }
 
+      // Update placeholder dynamically based on screen width
       function updatePlaceholder() {
         const input = document.getElementById("query");
-        if (window.innerWidth >= 510) {
-          input.placeholder = "Enter Search Keywords";
-        } else if (window.innerWidth < 400) {
-          input.placeholder = "Keywords";
-        } else {
-          input.placeholder = "Search Keywords";
-        }
+        input.placeholder =
+          window.innerWidth < 400
+            ? "Keywords"
+            : window.innerWidth < 510
+            ? "Search Keywords"
+            : "Enter Search Keywords";
       }
 
+      // Event listeners
       window.addEventListener("load", updatePlaceholder);
       window.addEventListener("resize", updatePlaceholder);
-
-      document
-        .getElementById("query")
-        .addEventListener("keypress", function (event) {
-          if (event.key === "Enter") {
-            event.preventDefault();
-            searchPapers();
-          }
-        });
+      document.getElementById("query").addEventListener("keypress", (event) => {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          searchPapers();
+        }
+      });
     </script>
   </head>
 
