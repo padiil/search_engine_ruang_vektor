@@ -20,91 +20,102 @@
       let currentPage = 1;
       const itemsPerPage = 10;
 
-      // Main search function
-      async function searchPapers() {
-        currentPage = 1;
-        const query = document.getElementById("query").value.trim();
-        const sortOption = document.getElementById("sortOption").value;
-        const yearFilter = document.querySelector(
-          'input[name="yearFilter"]:checked'
-        )?.value;
-        const resultsDiv = document.getElementById("results");
-        const countDiv = document.getElementById("count");
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="{{ url_for('static', filename='output.css') }}" rel="stylesheet" />
+  <link rel="icon" href="{{ url_for('static', filename='favicon.svg') }}" type="image/svg+xml" />
 
-        // Input validation
-        if (!query) {
-          alert("Masukkan kata kunci pencarian.");
-          return;
-        }
+  <title>Pencarian Paper</title>
+  <script>
+    // State management
+    let resultsData = [];
+    let currentPage = 1;
+    const itemsPerPage = 10;
 
-        // Show loading indicator
-        resultsDiv.innerHTML = "<p>Loading...</p>";
-        countDiv.innerHTML = "";
+    // Main search function
+    async function searchPapers() {
+      currentPage = 1;
+      const query = document.getElementById("query").value.trim();
+      const sortOption = document.getElementById("sortOption").value;
+      const yearFilter = document.querySelector(
+        'input[name="yearFilter"]:checked'
+      )?.value;
+      const resultsDiv = document.getElementById("results");
+      const countDiv = document.getElementById("count");
 
-        try {
-          const response = await fetch(
-            `/search?query=${encodeURIComponent(
-              query
-            )}&sort=${sortOption}&yearFilter=${yearFilter}`
-          );
-          if (!response.ok)
-            throw new Error(`HTTP error! status: ${response.status}`);
-
-          const results = await response.json();
-          resultsData = results;
-          displayResults(results, resultsDiv, countDiv);
-        } catch (error) {
-          resultsDiv.innerHTML =
-            "<p class='text-red-500'>Terjadi kesalahan saat mengambil data. Silakan coba lagi.</p>";
-          console.error("Error fetching data:", error);
-        }
+      // Input validation
+      if (!query) {
+        alert("Enter search keywords.");
+        return;
       }
 
-      // Display search results
-      function displayResults(results, resultsDiv, countDiv) {
-        resultsDiv.innerHTML = "";
+      // Show loading indicator
+      resultsDiv.innerHTML = "<p>Loading...</p>";
+      countDiv.innerHTML = "";
 
-        if (results.error) {
-          resultsDiv.innerHTML = `<p class="text-red-500">${results.error}</p>`;
-          return;
-        }
+      try {
+        const response = await fetch(
+          `/search?query=${encodeURIComponent(
+            query
+          )}&sort=${sortOption}&yearFilter=${yearFilter}`
+        );
+        if (!response.ok)
+          throw new Error(`HTTP error! status: ${response.status}`);
 
-        if (results.length === 0) {
-          resultsDiv.innerHTML =
-            "<p class='text-gray-600'>Tidak ada hasil ditemukan.</p>";
-        } else {
-          countDiv.innerHTML = `
+        const results = await response.json();
+        resultsData = results;
+        displayResults(results, resultsDiv, countDiv);
+      } catch (error) {
+        resultsDiv.innerHTML =
+          "<p class='text-red-500'>An error occurred while fetching data. Please try again.</p>";
+        console.error("Error fetching data:", error);
+      }
+    }
+
+    // Display search results
+    function displayResults(results, resultsDiv, countDiv) {
+      resultsDiv.innerHTML = "";
+
+      if (results.error) {
+        resultsDiv.innerHTML = `<p class="text-red-500">${results.error}</p>`;
+        return;
+      }
+
+      if (results.length === 0) {
+        resultsDiv.innerHTML =
+          "<p class='text-gray-600'>No results found.</p>";
+      } else {
+        countDiv.innerHTML = `
       <div class="flex items-center justify-center mx-auto space-x-2">
         ${getIcon()}
-        <p>${results.length} jurnal tersedia</p>
+        <p>${results.length} papers available</p>
       </div>`;
-          showPage(currentPage);
-        }
+        showPage(currentPage);
       }
+    }
 
-      function showPage(page) {
-        const resultsDiv = document.getElementById("results");
-        const startIndex = (page - 1) * itemsPerPage;
-        const endIndex = page * itemsPerPage;
-        const currentItems = resultsData.slice(startIndex, endIndex);
+    function showPage(page) {
+      const resultsDiv = document.getElementById("results");
+      const startIndex = (page - 1) * itemsPerPage;
+      const endIndex = page * itemsPerPage;
+      const currentItems = resultsData.slice(startIndex, endIndex);
 
-        resultsDiv.innerHTML = currentItems
-          .map((paper) => {
-            const scorePercentage = Math.round(paper.score * 100); // Convert score to percentage
-            const abstractWords = paper.abstract.split(" ");
-            const truncatedAbstract =
-              abstractWords.length > 20
-                ? abstractWords.slice(0, 20).join(" ") + "..."
-                : paper.abstract;
+      resultsDiv.innerHTML = currentItems
+        .map((paper) => {
+          const scorePercentage = Math.round(paper.score * 100); // Convert score to percentage
+          const abstractWords = paper.abstract.split(" ");
+          const truncatedAbstract =
+            abstractWords.length > 20
+              ? abstractWords.slice(0, 20).join(" ") + "..."
+              : paper.abstract;
 
-            return `
-        <div class="w-11/12 p-6 mx-auto mb-4 bg-white border border-gray-200 rounded-lg shadow-lg md:w-10/12 lg:w-9/12">
-          <h3 class="mb-2 text-lg font-bold">${
-            paper.title || "Unavailable"
-          }</h3>
-          <p class="mb-4 text-sm text-gray-500">${
-            paper.authors?.join(", ") || "Unavailable"
-          }</p>
+          return `
+        <div class="w-11/12 p-6 mx-auto mb-4 bg-white border border-gray-200 rounded-lg shadow-lg md:w-10/12 lg:w-[100%]">
+          <h3 class="mb-2 text-lg font-bold">${paper.title || "Unavailable"
+            }</h3>
+          <p class="mb-4 text-sm text-gray-500">${paper.authors?.join(", ") || "Unavailable"
+            }</p>
           <div class="w-full h-4 bg-gray-300 rounded-full">
             <div 
               class="h-4 rounded-full" 
@@ -115,44 +126,43 @@
           <p class="mt-4 text-sm">${truncatedAbstract}</p>
         </div>
       `;
-          })
-          .join("");
+        })
+        .join("");
 
-        showPagination();
-      }
+      showPagination();
+    }
 
-      // SVG Icon
-      function getIcon() {
-        return `
+    // SVG Icon
+    function getIcon() {
+      return `
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6">
         <path d="M5.625 1.5c-1.036 0-1.875.84-1.875 1.875v17.25c0 1.035.84 1.875 1.875 1.875h12.75c1.035 0 1.875-.84 1.875-1.875V12.75A3.75 3.75 0 0 0 16.5 9h-1.875a1.875 1.875 0 0 1-1.875-1.875V5.25A3.75 3.75 0 0 0 9 1.5H5.625Z" />
         <path d="M12.971 1.816A5.23 5.23 0 0 1 14.25 5.25v1.875c0 .207.168.375.375.375H16.5a5.23 5.23 0 0 1 3.434 1.279 9.768 9.768 0 0 0-6.963-6.963Z" />
       </svg>`;
-      }
-      function curva() {
-        return `
+    }
+    function curva() {
+      return `
          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
   <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18 9 11.25l4.306 4.306a11.95 11.95 0 0 1 5.814-5.518l2.74-1.22m0 0-5.94-2.281m5.94 2.28-2.28 5.941" />
 </svg>
 
 `;
-      }
-      // Show a specific page of results
-      function showPage(page) {
-        const resultsDiv = document.getElementById("results");
-        const startIndex = (page - 1) * itemsPerPage;
-        const endIndex = page * itemsPerPage;
-        const currentItems = resultsData.slice(startIndex, endIndex);
+    }
+    function showPage(page) {
+      const resultsDiv = document.getElementById("results");
+      const startIndex = (page - 1) * itemsPerPage;
+      const endIndex = page * itemsPerPage;
+      const currentItems = resultsData.slice(startIndex, endIndex);
 
-        resultsDiv.innerHTML = currentItems
-          .map((paper) => {
-            const abstractWords = paper.abstract.split(" ");
-            const truncatedAbstract =
-              abstractWords.length > 20
-                ? abstractWords.slice(0, 20).join(" ") + "..."
-                : paper.abstract;
+      resultsDiv.innerHTML = currentItems
+        .map((paper) => {
+          const abstractWords = paper.abstract.split(" ");
+          const truncatedAbstract =
+            abstractWords.length > 20
+              ? abstractWords.slice(0, 20).join(" ") + "..."
+              : paper.abstract;
 
-            return `
+          return `
         <div class="w-11/12 p-6 mx-auto mb-4 bg-white border border-gray-200 rounded-lg shadow-lg md:w-10/12 lg:w-9/12">
             <div class="px-2 py-2 mb-4 bg-blue-100 rounded-lg shadow-md">
                 <div class="flex items-center space-x-4">
@@ -162,177 +172,139 @@
               <div class="px-4 py-2 mx-auto text-center bg-white border border-gray-300 rounded-lg text-medium">
               <strong class="text-xs text-slate-800">Relevance Score:</strong><br>
               <div class="text-sm text-blue-800">${Math.round(
-                paper.score * 100
-              )}%</div>
+            paper.score * 100
+          )}%</div>
               </div>
             </div>
           <strong>Title:</strong> ${paper.title || "Unavailable"}<br>
-          <strong>Authors:</strong> ${
-            paper.authors?.join(", ") || "Unavailable"
-          }<br>
-          <strong>Publisher (Venue):</strong> ${
-            paper.venue || "Unavailable"
-          }<br>
+          <strong>Authors:</strong> ${paper.authors?.join(", ") || "Unavailable"
+            }<br>
+          <strong>Publisher (Venue):</strong> ${paper.venue || "Unavailable"
+            }<br>
           <strong>Year:</strong> ${paper.year || "Unavailable"}<br>
           <strong>Citations:</strong> ${paper.n_citation || "0"}<br>
           <strong>Abstract:</strong> ${truncatedAbstract}<br>
         </div>
       `;
-          })
-          .join("");
+        })
+        .join("");
 
-        showPagination();
-      }
+      showPagination();
+    }
 
-      // Display pagination buttons
-      function showPagination() {
-        const paginationDiv = document.getElementById("pagination");
-        const totalPages = Math.ceil(resultsData.length / itemsPerPage);
+    // Display pagination buttons
+    function showPagination() {
+      const paginationDiv = document.getElementById("pagination");
+      const totalPages = Math.ceil(resultsData.length / itemsPerPage);
 
-        paginationDiv.innerHTML = `
+      paginationDiv.innerHTML = `
         <div class='mb-6'>
-      <button onclick="changePage('prev')" class="px-4 py-2 bg-gray-200 hover:bg-gray-400  rounded w-24 ${
-        currentPage === 1 ? "opacity-50 cursor-not-allowed" : ""
-      }" ${currentPage === 1 ? "disabled" : ""}>Previous</button>
+      <button onclick="changePage('prev')" class="px-4 py-2 bg-gray-200 hover:bg-gray-400  rounded w-24 ${currentPage === 1 ? "opacity-50 cursor-not-allowed" : ""
+        }" ${currentPage === 1 ? "disabled" : ""}>Previous</button>
       <span>Page ${currentPage} of ${totalPages}</span>
-      <button onclick="changePage('next')" class="px-4 py-2 bg-gray-200 hover:bg-gray-400 rounded w-24 ${
-        currentPage === totalPages ? "opacity-50 cursor-not-allowed" : ""
-      }" ${currentPage === totalPages ? "disabled" : ""}>Next</button></div?
+      <button onclick="changePage('next')" class="px-4 py-2 bg-gray-200 hover:bg-gray-400 rounded w-24 ${currentPage === totalPages ? "opacity-50 cursor-not-allowed" : ""
+        }" ${currentPage === totalPages ? "disabled" : ""}>Next</button></div?
         `;
+    }
+
+    // Handle page navigation
+    function changePage(direction) {
+      const totalPages = Math.ceil(resultsData.length / itemsPerPage);
+
+      if (direction === "next" && currentPage < totalPages) {
+        currentPage++;
+      } else if (direction === "prev" && currentPage > 1) {
+        currentPage--;
       }
+      showPage(currentPage);
+    }
 
-      // Handle page navigation
-      function changePage(direction) {
-        const totalPages = Math.ceil(resultsData.length / itemsPerPage);
-
-        if (direction === "next" && currentPage < totalPages) {
-          currentPage++;
-        } else if (direction === "prev" && currentPage > 1) {
-          currentPage--;
-        }
-        showPage(currentPage);
-      }
-
-      // Update placeholder dynamically based on screen width
-      function updatePlaceholder() {
-        const input = document.getElementById("query");
-        input.placeholder =
-          window.innerWidth < 400
-            ? "Keywords"
-            : window.innerWidth < 510
+    // Update placeholder dynamically based on screen width
+    function updatePlaceholder() {
+      const input = document.getElementById("query");
+      input.placeholder =
+        window.innerWidth < 400
+          ? "Keywords"
+          : window.innerWidth < 510
             ? "Search Keywords"
             : "Enter Search Keywords";
+    }
+
+    // Event listeners
+    window.addEventListener("load", updatePlaceholder);
+    window.addEventListener("resize", updatePlaceholder);
+    document.getElementById("query").addEventListener("keypress", (event) => {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        searchPapers();
       }
+    });
+  </script>
+</head>
 
-      // Event listeners
-      window.addEventListener("load", updatePlaceholder);
-      window.addEventListener("resize", updatePlaceholder);
-      document.getElementById("query").addEventListener("keypress", (event) => {
-        if (event.key === "Enter") {
-          event.preventDefault();
-          searchPapers();
-        }
-      });
-    </script>
-  </head>
+<body class="w-full max-w-screen-lg mx-auto bg-gray-50 my-12 px-4 md:px-8">
+  <div class="w-full bg-white rounded-lg shadow-md p-6 md:p-10">
+    <h1 class="mb-4 text-4xl font-extrabold text-center text-gray-800 md:mb-6">
+      Journal Search System
+    </h1>
+    <p class="mb-8 text-lg text-center text-gray-500">
+      Powered by Vector Space Model
+    </p>
 
-  <body class="w-11/12 mx-auto bg-white md:w-9/12">
-    <div class="w-11/12 mx-auto md:10/12 lg:9/12 md:p-8">
-      <h1
-        class="mb-2 text-3xl font-bold text-center text-gray-800 mt-14 md:mt-20"
-      >
-        Journal Search System
-      </h1>
-      <p class="mb-6 text-lg text-center text-gray-600">
-        Powered by Vector Space Model
-      </p>
+    <div class="flex flex-col items-center gap-4 md:flex-row">
+      <input type="text" id="query"
+        class="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 md:flex-1"
+        placeholder="Enter Search Keywords" />
+      <button onclick="searchPapers()"
+        class="w-full px-6 py-3 text-white bg-blue-600 rounded-lg shadow-md md:w-auto hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+        Search
+      </button>
+    </div>
 
-      <div class="flex justify-center w-full mx-auto">
-        <input
-          type="text"
-          id="query"
-          class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          placeholder="Enter Search Keywords"
-        />
-        <button
-          onclick="searchPapers()"
-          class="px-4 py-2 ml-8 text-white bg-blue-600 rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-        >
-          Search
-        </button>
+    <div class="mt-6 flex flex-col items-center md:flex-row md:justify-between">
+      <select id="sortOption"
+        class="p-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 md:mr-4">
+        <option value="relevance">Relevance</option>
+        <option value="year">Newest Year</option>
+        <option value="citations">Most Citations</option>
+      </select>
+
+      <div class="mt-4 grid grid-cols-2 gap-4 md:mt-0 md:grid-cols-3 lg:grid-cols-6">
+        <label class="flex items-center">
+          <input type="radio" name="yearFilter" value="all" checked class="text-blue-600 form-radio" />
+          <span class="ml-2">All Years</span>
+        </label>
+        <label class="flex items-center">
+          <input type="radio" name="yearFilter" value="1" class="text-blue-600 form-radio" />
+          <span class="ml-2">1 Year</span>
+        </label>
+        <label class="flex items-center">
+          <input type="radio" name="yearFilter" value="3" class="text-blue-600 form-radio" />
+          <span class="ml-2">3 Years</span>
+        </label>
+        <label class="flex items-center">
+          <input type="radio" name="yearFilter" value="5" class="text-blue-600 form-radio" />
+          <span class="ml-2">5 Years</span>
+        </label>
+        <label class="flex items-center">
+          <input type="radio" name="yearFilter" value="10" class="text-blue-600 form-radio" />
+          <span class="ml-2">10 Years</span>
+        </label>
       </div>
     </div>
-    <div>
-      <div class="flex justify-center">
-        <select
-          id="sortOption"
-          class="p-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-        >
-          <option value="relevance">Relevansi</option>
-          <option value="year">Tahun Terbaru</option>
-          <option value="citations">Sitasi Terbanyak</option>
-        </select>
-      </div>
-      <div class="grid grid-cols-1 gap-4 mt-4 sm:grid-cols-2 lg:grid-cols-3">
-        <div class="flex items-center">
-          <input
-            type="radio"
-            name="yearFilter"
-            value="all"
-            checked
-            class="text-blue-600 form-radio"
-          />
-          <span class="ml-2">Semua Tahun</span>
-        </div>
-        <div class="flex items-center">
-          <input
-            type="radio"
-            name="yearFilter"
-            value="3"
-            class="text-blue-600 form-radio"
-          />
-          <span class="ml-2">3 Tahun Kebelakang</span>
-        </div>
-        <div class="flex items-center">
-          <input
-            type="radio"
-            name="yearFilter"
-            value="5"
-            class="text-blue-600 form-radio"
-          />
-          <span class="ml-2">5 Tahun Kebelakang</span>
-        </div>
-        <div class="flex items-center">
-          <input
-            type="radio"
-            name="yearFilter"
-            value="1"
-            class="text-blue-600 form-radio"
-          />
-          <span class="ml-2">1 Tahun Kebelakang</span>
-        </div>
-        <div class="flex items-center">
-          <input
-            type="radio"
-            name="yearFilter"
-            value="10"
-            class="text-blue-600 form-radio"
-          />
-          <span class="ml-2">10 Tahun Kebelakang</span>
-        </div>
-        <div class="flex items-center">
-          <input
-            type="radio"
-            name="yearFilter"
-            value="20"
-            class="text-blue-600 form-radio"
-          />
-          <span class="ml-2">20 Tahun Kebelakang</span>
-        </div>
-      </div>
+
+    <div id="count" class="mt-6 text-lg text-center text-gray-600"></div>
+
+    <div id="results" class="mt-8 grid gap-6 sm:grid-cols-2">
+
     </div>
-    <div id="count" class="mt-4 text-lg text-center text-gray-600"></div>
-    <div id="results" class="mt-8 space-y-4"></div>
-    <div id="pagination" class="flex justify-center mt-8 space-x-4"></div>
-  </body>
+
+    <div id="pagination" class="flex justify-center mt-8 space-x-4">
+
+    </div>
+  </div>
+</body>
+
+
+
 </html>
