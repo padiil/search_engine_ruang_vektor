@@ -1,24 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link
-      href="{{ url_for('static', filename='output.css') }}"
-      rel="stylesheet"
-    />
-    <link
-      rel="icon"
-      href="{{ url_for('static', filename='favicon.svg') }}"
-      type="image/svg+xml"
-    />
-
-    <title>Pencarian Paper</title>
-    <script>
-      // State management
-      let resultsData = [];
-      let currentPage = 1;
-      const itemsPerPage = 10;
 
 <head>
   <meta charset="UTF-8" />
@@ -26,7 +7,7 @@
   <link href="{{ url_for('static', filename='output.css') }}" rel="stylesheet" />
   <link rel="icon" href="{{ url_for('static', filename='favicon.svg') }}" type="image/svg+xml" />
 
-  <title>Pencarian Paper</title>
+  <title>Journal Search System</title>
   <script>
     // State management
     let resultsData = [];
@@ -117,8 +98,8 @@
           <p class="mb-4 text-sm text-gray-500">${paper.authors?.join(", ") || "Unavailable"
             }</p>
           <div class="w-full h-4 bg-gray-300 rounded-full">
-            <div 
-              class="h-4 rounded-full" 
+            <div
+              class="h-4 rounded-full"
               style="width: ${scorePercentage}%; background-color: #1E3A8A;"
             ></div>
           </div>
@@ -304,7 +285,5 @@
     </div>
   </div>
 </body>
-
-
 
 </html>
